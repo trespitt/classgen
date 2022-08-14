@@ -1,0 +1,17 @@
+import {import}
+
+public class {class} {
+    private {varType} {varName};
+
+    public {class}(@JsonCreator("{varName}") {varType} {varName} ) {
+        this.{varName} = {varName};
+    }
+
+    public {varType} get{VarName}() {
+        return {varName}
+    }
+
+    public void set{VarName}({varType} {varName}) {
+        this.{varName} = {varName};
+    }
+}

@@ -1,0 +1,17 @@
+class: LandRover
+fields:
+  -
+    name: model
+    type: String
+  -
+    name: year
+    type: int
+  - 
+    name: trim
+    type: String
+
+jackson: true
+ignoreUnknown: true
+setters: true
+imports:
+  - java.util.time
