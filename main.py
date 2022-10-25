@@ -1,4 +1,5 @@
-from os import listdir, linesep
+import sys
+from os import listdir, linesep, path, mkdir
 from yaml import load, dump
 from datetime import datetime
 
@@ -10,7 +11,8 @@ except ImportError:
 
 class ClassGenerator:
     def __init__(self, config_dir='inputs', config_file='config.yml', output_dir='outputs'):
-        if config_dir not in listdir('.'):
+        #if config_dir not in listdir('.'):
+        if not path.isdir(config_dir):
             raise ValueError("missing config dir: " + config_dir)
         if config_file not in listdir(config_dir):
             raise ValueError("missing config file: " + config_file)
@@ -71,12 +73,23 @@ class ClassGenerator:
             return s
         return s + ';'
 
-    def gen_file(self):
-        with open(f"{self.output_dir}/{self.__data['class']}{self.__tstamp()}.java", 'a') as fo:
+    def gen_file(self, single_file=True):
+        fname = ""
+        if single_file:
+            fname = f"{self.output_dir}/{self.__data['class']}{self.__tstamp()}.java"
+        else:
+            output_sub = f"{self.output_dir}/java_{self.__tstamp()}"
+            if not path.exists(output_sub):
+                mkdir(output_sub)
+            fname = f"{output_sub}/{self.__data['class']}.java"
+        print(f"Writing {fname}")
+
+        with open(fname, 'a') as fo:
             fo.write(self.__safe_pkg(self.__safe_semicolon(self.__data['package'])) + linesep + linesep)
-            for impt in self.__data['imports']:
-                fo.write(self.__safe_semicolon(self.__safe_import(impt)) + linesep)
-            fo.write(linesep)
+            if self.__data['imports'] is not None:
+                for impt in self.__data['imports']:
+                    fo.write(self.__safe_semicolon(self.__safe_import(impt)) + linesep)
+                fo.write(linesep)
 
             if self.__data['ignoreUnknown']:
                 fo.write("@JsonIgnoreProperties(ignoreUnknown = true)" + linesep)
@@ -110,17 +123,24 @@ class ClassGenerator:
                 strrG = self.__template_getter().replace("{varName}", field['name']).replace("{varType}", field['type']).\
                             replace("{VarName}", self.__capitalize_first(field['name']))
                 fo.write(strrG + linesep)
-                fo.write(linesep)
+                # fo.write(linesep)
 
                 if self.__data['setters']:
                     strrS = self.__template_setter().replace("{varName}", field['name']).replace("{varType}", field['type']).\
                                 replace("{VarName}", self.__capitalize_first(field['name']))
                     fo.write(strrS + linesep)
-                    fo.write(linesep)
+                    # fo.write(linesep)
 
             fo.write('}')
 
 if __name__ == '__main__':
-    cg = ClassGenerator()
-    cg.proc_config()
-    cg.gen_file()
+    if len(sys.argv) == 1:
+        cg = ClassGenerator()
+        cg.proc_config()
+        cg.gen_file()
+    elif len(sys.argv) == 2:
+        print("searching " + sys.argv[1])
+        for f in listdir(sys.argv[1]):
+            cg = ClassGenerator(config_dir=sys.argv[1], config_file=f)
+            cg.proc_config()
+            cg.gen_file(single_file=False)
